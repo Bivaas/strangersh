@@ -1,4 +1,6 @@
-# NAME_NOT_DECIDED_YET 
+# strangersh
+
+A name derived from my dictionary by combining stranger and ssh word.
 
 A chatbot type project that tries to act like a human and we (the actual human) will knowingly waste our time chatting with a bot.
 

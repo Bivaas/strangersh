@@ -9,8 +9,9 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/bubbletea"
+	
+	"github.com/charmbracelet/bubbles/textinput"
 )
-
 
 
 func main() { 
@@ -43,10 +44,14 @@ func main() {
 // new function for each unique user
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
-	return model{}, nil
+	input := textinput.New()
+	input.Placeholder = "say hi to me :) "
+	input.Width = 50
+	input.Focus()
+
+	return model {input: input}, nil
 }
 
-type model struct{}
 
 func (m model) Init() tea.Cmd {
 	return nil
@@ -56,14 +61,41 @@ func (m model) Init() tea.Cmd {
 // to run in new events like keypresses
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
-	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "q" {
+	// esc quit
+	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "esc" {
 		return m, tea.Quit
 	}
 
-	return m, nil
+	// enter send
+	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" {
+
+		m.messages = append(m.messages, m.input.Value())
+		m.input.Reset()
+		return m, nil
+	}
+
+	var cmd tea.Cmd
+	m.input, cmd = m.input.Update(msg)
+	return m, cmd
+
 }
 
+// user box
 func (m model) View() string {
 
-	return "Welcome....... \n\n Press q to leave \n"
+	chat := ""
+	for _, text := range m.messages {
+
+		chat += "you: " + text + "\n"
+	} 
+
+	return "welcome to my new world ..... \n\n" + chat + "\n" + m.input.View() + "\n\n press esc to leave \n" 
+}
+
+
+// user input and message storage array
+type  model struct {
+
+	input textinput.Model
+	messages []string
 }
