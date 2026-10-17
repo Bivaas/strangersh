@@ -18,3 +18,7 @@ I got this random idea out of nowhere. Few weeks ago me and my friends used a we
 https://github.com/charmbracelet
 
 ```
+
+# Use of AI:
+
+I used AI to generate random person name and their description(persona), to diagnose bugs and error alongside some constructive feedback about the project. 
