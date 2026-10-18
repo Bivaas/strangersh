@@ -14,7 +14,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
-const aiModel = "nvidia/nemotron-3.5-lightning-30b-a3b"
+const aiModel = "nvidia/nemotron-3-super-120b-a12b"
 var apiKey string 
 
 func main() { 
@@ -91,8 +91,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// got reply now with name and context
 	if reply, ok := msg.(replyMsg); ok {
 
-		m.messages = append(m.messages, message{Role: "assistant", Content: string(reply)})
 		m.typing = false
+		if reply == "" {
+
+			m.notice = "connection failed, send again !"
+			return m, nil
+		}
+
+		m.notice = ""
+		m.messages = append(m.messages, message{Role: "assistant", Content: string(reply)})
 		return m, nil
 	}
 
@@ -113,25 +120,27 @@ func (m model) View() string {
 			name = m.who.Name
 		}
 		chat += name + ": " + line.Content + "\n"
-
-		// typing indicator
-		if m.typing { 
-			
-			chat += m.who.Name + " is typing....\n"
-		}
 	}
+
+	// typing indicator
+	if m.typing { 
+		
+		chat += m.who.Name + " is typing....\n"
+	}
+	chat += m.notice
 
 	return "welcome to my new world ..... \n\n you are chatting with " + m.who.Name + "\n\n" + chat + "\n" + m.input.View() + "\n\n press esc to leave \n" 
 }
 
 
 // user input and message storage array
-type  model struct {
+type model struct {
 
 	input textinput.Model
 	messages []message
 	typing bool
 	who persona
+	notice string
 }
 
 // bot ans back to update

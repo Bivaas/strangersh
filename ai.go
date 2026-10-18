@@ -30,7 +30,7 @@ func aiReply(p persona, chat []message) tea.Cmd {
 		if err != nil { 
 
 			log.Error("AI failed", "error", err)
-			return replyMsg ("lost connection, say that again?")
+			return replyMsg ("")
 		}
 		return replyMsg(reply)
 	}
