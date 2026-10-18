@@ -4,7 +4,7 @@ package main
 import (
 
 	tea "github.com/charmbracelet/bubbletea"
-	
+	"strings"
 	"os"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
@@ -12,12 +12,16 @@ import (
 	"github.com/charmbracelet/wish/bubbletea"
 	
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 const aiModel = "nvidia/nemotron-3-super-120b-a12b"
 var apiKey string 
 
 func main() { 
+
+	lipgloss.SetColorProfile(termenv.ANSI256)
 
 	// API import and setup
 	apiKey = os.Getenv("NV_API_KEY")
@@ -74,6 +78,11 @@ func (m model) Init() tea.Cmd {
 // to run in new events like keypresses
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
+	if size, ok := msg.(tea.WindowSizeMsg); ok {
+		m.width = size.Width
+		m.height = size.Height
+	}
+
 	// esc quit
 	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "esc" {
 		return m, tea.Quit
@@ -109,27 +118,50 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 }
 
+var (
+	youStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("39"))
+	strangerStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
+	dimStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+	boxStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("205")).Padding(0, 2)
+
+)
+
 // user box and response with name
 func (m model) View() string {
+
+	header := boxStyle.Render("* welcome to my new world * \n\n Meet "+m.who.Name+"and greet him !") + "\n\n"
+	footer := "\n" + m.input.View() + "\n\n" + dimStyle.Render("esc to leave")
 
 	chat := ""
 	for _, line := range m.messages {
 
-		name := "you"
+		name := youStyle.Render("you")
 		if line.Role == "assistant" {
-			name = m.who.Name
+
+			name = strangerStyle.Render(m.who.Name)
 		}
-		chat += name + ": " + line.Content + "\n"
+
+		text:= lipgloss.NewStyle().PaddingLeft(2).Width(m.width).Render(line.Content)
+		chat += name + "\n" + text + "\n\n"
 	}
 
 	// typing indicator
-	if m.typing { 
-		
-		chat += m.who.Name + " is typing....\n"
-	}
-	chat += m.notice
+	if m.typing {
 
-	return "welcome to my new world ..... \n\n you are chatting with " + m.who.Name + "\n\n" + chat + "\n" + m.input.View() + "\n\n press esc to leave \n" 
+		chat += dimStyle.Render(m.who.Name+" is typing....") + "\n"
+	}
+	chat += dimStyle.Render(m.notice)
+
+	// lines to fit window
+	lines := strings.Split(chat, "\n")
+	room := max(m.height-lipgloss.Height(header)-lipgloss.Height(footer), 1)
+
+	if len(lines) > room { 
+		lines = lines[len(lines)-room:]
+	}
+	chat = strings.Join(lines, "\n")
+
+	return header + chat + footer
 }
 
 
@@ -141,6 +173,8 @@ type model struct {
 	typing bool
 	who persona
 	notice string
+	width int
+	height int 
 }
 
 // bot ans back to update
