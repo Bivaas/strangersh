@@ -4,8 +4,8 @@ package main
 import (
 
 	tea "github.com/charmbracelet/bubbletea"
+	
 	"os"
-	"time"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
@@ -14,8 +14,20 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
+const aiModel = "nvidia/nemotron-3.5-lightning-30b-a3b"
+var apiKey string 
 
 func main() { 
+
+	// API import and setup
+	apiKey = os.Getenv("NV_API_KEY")
+	if apiKey == "" {
+
+		log.Error("apiKey not setup correctly !")
+		os.Exit(1)
+	}
+	log.Info("key loaded", "model", aiModel)
+
 
 	srv, err := wish.NewServer(
 
@@ -70,16 +82,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// enter send and fake msg
 	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" {
 
-		m.messages = append(m.messages, "you: "+m.input.Value())
+		m.messages = append(m.messages, message{Role: "user", Content: m.input.Value()})
 		m.input.Reset()
 		m.typing = true
-		return m, fakerply()
+		return m, aiReply(m.who, m.messages )
 	}
 
-	// got reply now
+	// got reply now with name and context
 	if reply, ok := msg.(replyMsg); ok {
 
-		m.messages = append(m.messages, "stranger: "+string(reply))
+		m.messages = append(m.messages, message{Role: "assistant", Content: string(reply)})
 		m.typing = false
 		return m, nil
 	}
@@ -90,20 +102,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 }
 
-// user box
+// user box and response with name
 func (m model) View() string {
 
 	chat := ""
-	for _, text := range m.messages {
+	for _, line := range m.messages {
 
-		chat += text + "\n"
-	} 
-	if m.typing {
+		name := "you"
+		if line.Role == "assistant" {
+			name = m.who.Name
+		}
+		chat += name + ": " + line.Content + "\n"
 
-		chat += "typing your response... \n"
+		// typing indicator
+		if m.typing { 
+			
+			chat += m.who.Name + " is typing....\n"
+		}
 	}
 
-	return "welcome to my new world ..... \n\n" + chat + "\n" + m.input.View() + "\n\n press esc to leave \n" 
+	return "welcome to my new world ..... \n\n you are chatting with " + m.who.Name + "\n\n" + chat + "\n" + m.input.View() + "\n\n press esc to leave \n" 
 }
 
 
@@ -111,18 +129,10 @@ func (m model) View() string {
 type  model struct {
 
 	input textinput.Model
-	messages []string
+	messages []message
 	typing bool
 	who persona
 }
 
 // bot ans back to update
 type replyMsg string
-
-func fakerply() tea.Cmd {
-
-	return func() tea.Msg { 
-		time.Sleep(2 * time.Second)
-		return replyMsg ("who's this ??")
-	}
-}
