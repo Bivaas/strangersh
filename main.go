@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
+	"time"
 )
 
 const aiModel = "nvidia/nemotron-3-super-120b-a12b"
@@ -103,8 +104,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.left = false
 		m.input.Reset()
 		m.chatID++
+		m.searching = true
 		
-		return m, nil
+		return m, tea.Tick(1500*time.Millisecond, func(time.Time) tea.Msg { return searchDoneMsg{} })
 	}
 
 	// enter send and fake msg
@@ -114,6 +116,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.input.Reset()
 		m.typing = true
 		return m, aiReply(m.who, m.messages, m.chatID)
+	}
+
+	// search screen
+	if _, ok := msg.(searchDoneMsg); ok {
+
+		m.searching = false
+		return m, nil
 	}
 
 	// got reply now with name and context
@@ -159,6 +168,11 @@ var (
 
 // user box and response with name
 func (m model) View() string {
+
+	if m.searching { 
+
+		return boxStyle.Render("searching for a stranger...")
+	}
 
 	header := boxStyle.Render("* welcome to my new world * \n\n Meet "+m.who.Name+"and greet him !") + "\n\n"
 	footer := "\n" + m.input.View() + "\n\n" + dimStyle.Render("ctrl+n: New Chat \nesc: leave")
@@ -208,11 +222,15 @@ type model struct {
 	typing bool
 	who persona
 	notice string
+
 	width int
 	height int
 	chatID int 
 	left bool
+	searching bool
 }
+
+type searchDoneMsg struct{}
 
 // bot ans back to update
 type replyMsg struct {

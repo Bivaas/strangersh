@@ -32,6 +32,9 @@ func aiReply(p persona, chat []message, chatID int) tea.Cmd {
 			log.Error("AI failed", "error", err)
 			return replyMsg{chatID, ""}
 		}
+		// human delay
+		time.Sleep(time.Duration(min(len(reply)*30, 4000)) * time.Millisecond)
+
 		return replyMsg{chatID, reply}
 	}
 }
