@@ -98,14 +98,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.messages = nil
-		m. typing = false
+		m.typing = false
 		m.notice = ""
+		m.left = false
+		m.input.Reset()
 		m.chatID++
+		
 		return m, nil
 	}
 
 	// enter send and fake msg
-	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" && !m.typing {
+	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" && !m.typing && !m.left {
 
 		m.messages = append(m.messages, message{Role: "user", Content: m.input.Value()})
 		m.input.Reset()
@@ -130,7 +133,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.notice = ""
-		m.messages = append(m.messages, message{Role: "assistant", Content: reply.text})
+		if strings.Contains(reply.text, "[leave]") {
+
+			m.left = true
+		}
+
+		text := strings.ReplaceAll(reply.text, "[leave]", "")
+		m.messages = append(m.messages, message{Role: "assistant", Content: text})
 		return m, nil
 	}
 
@@ -172,6 +181,10 @@ func (m model) View() string {
 
 		chat += dimStyle.Render(m.who.Name+" is typing....") + "\n"
 	}
+	if m.left {
+
+		chat += dimStyle.Render(m.who.Name+ " has left the chat") + "\n"
+	}
 	chat += dimStyle.Render(m.notice)
 
 	// lines to fit window
@@ -198,6 +211,7 @@ type model struct {
 	width int
 	height int
 	chatID int 
+	left bool
 }
 
 // bot ans back to update

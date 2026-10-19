@@ -39,7 +39,7 @@ func aiReply(p persona, chat []message, chatID int) tea.Cmd {
 // persona and context as system prompt
 func askAI (p persona, chat []message) (string, error) {
 
-	system := message{Role: "system", Content: "You are " + p.Name + ". " + p.About + " You are texting as a stranger individual to someone. You have to reply like a real person texting with short, causal in completely human form while behaving like your character description. Don't tell anything about being AI."}
+	system := message{Role: "system", Content: "You are " + p.Name + ". " + p.About + " You are texting as a stranger individual to someone. You have to reply like a real person texting with short, causal in completely human form while behaving like your character description. Don't tell anything about being AI. If the user seem to be rude or boring, you can leave saying a short goodbye and end your message with [leave]"}
 
 	body, _ := json.Marshal(map[string]any{
 
