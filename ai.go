@@ -22,7 +22,7 @@ type message struct {
 }
 
 // ask the AI
-func aiReply(p persona, chat []message) tea.Cmd {
+func aiReply(p persona, chat []message, chatID int) tea.Cmd {
 
 	return func() tea.Msg {
 
@@ -30,9 +30,9 @@ func aiReply(p persona, chat []message) tea.Cmd {
 		if err != nil { 
 
 			log.Error("AI failed", "error", err)
-			return replyMsg ("")
+			return replyMsg{chatID, ""}
 		}
-		return replyMsg(reply)
+		return replyMsg{chatID, reply}
 	}
 }
 

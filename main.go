@@ -88,27 +88,49 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 
+	// new stranger
+	if key, ok :=  msg.(tea.KeyMsg); ok && key.String() == "ctrl+n" {
+
+		old := m.who.Name
+		for m.who.Name == old {
+
+			m.who = randomPersona()
+		}
+
+		m.messages = nil
+		m. typing = false
+		m.notice = ""
+		m.chatID++
+		return m, nil
+	}
+
 	// enter send and fake msg
-	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" {
+	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" && !m.typing {
 
 		m.messages = append(m.messages, message{Role: "user", Content: m.input.Value()})
 		m.input.Reset()
 		m.typing = true
-		return m, aiReply(m.who, m.messages )
+		return m, aiReply(m.who, m.messages, m.chatID)
 	}
 
 	// got reply now with name and context
 	if reply, ok := msg.(replyMsg); ok {
 
+		// old reply skip
+		if reply.chatID != m.chatID {
+
+			return m, nil
+		}
+
 		m.typing = false
-		if reply == "" {
+		if reply.text == "" {
 
 			m.notice = "connection failed, send again !"
 			return m, nil
 		}
 
 		m.notice = ""
-		m.messages = append(m.messages, message{Role: "assistant", Content: string(reply)})
+		m.messages = append(m.messages, message{Role: "assistant", Content: reply.text})
 		return m, nil
 	}
 
@@ -130,7 +152,7 @@ var (
 func (m model) View() string {
 
 	header := boxStyle.Render("* welcome to my new world * \n\n Meet "+m.who.Name+"and greet him !") + "\n\n"
-	footer := "\n" + m.input.View() + "\n\n" + dimStyle.Render("esc to leave")
+	footer := "\n" + m.input.View() + "\n\n" + dimStyle.Render("ctrl+n: New Chat \nesc: leave")
 
 	chat := ""
 	for _, line := range m.messages {
@@ -174,8 +196,13 @@ type model struct {
 	who persona
 	notice string
 	width int
-	height int 
+	height int
+	chatID int 
 }
 
 // bot ans back to update
-type replyMsg string
+type replyMsg struct {
+
+	chatID int 
+	text string
+}
