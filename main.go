@@ -64,7 +64,7 @@ func main() {
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
 	input := textinput.New()
-	input.Placeholder = "say hi to me :) "
+	input.Placeholder = "Your nickname ?"
 	input.Width = 50
 	input.Focus()
 
@@ -113,14 +113,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		
 		return m, tea.Tick(1500*time.Millisecond, func(time.Time) tea.Msg { return searchDoneMsg{} })
 	}
-
+	
+	// gets nickname
+	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.nick == "" && m.input.Value() != "" {
+		
+		m.nick = m.input.Value()
+		m.input.Reset()
+		m.input.Placeholder = "say hi to me :) "
+		m.started = time.Now()
+		return m, nil
+	}
+	
 	// enter send and fake msg
 	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "enter" && m.input.Value() != "" && !m.typing && !m.left {
 
 		m.messages = append(m.messages, message{Role: "user", Content: m.input.Value()})
 		m.input.Reset()
 		m.typing = true
-		return m, aiReply(m.who, m.messages, m.chatID)
+		return m, aiReply (m.who, m.messages, m.chatID)
 	}
 
 	// search screen
@@ -180,18 +190,24 @@ func (m model) View() string {
 		return boxStyle.Render("goodbye! " +summary) + "\n"
 	}
 
+
 	if m.searching { 
 
 		return boxStyle.Render("searching for a stranger...")
 	}
 
+	if m.nick == "" {
+		return boxStyle.Render("* welcome to my new world * \n\nbefore you go in.. what should we call you ?") + "\n\n" + m.input.View()
+	}
+
+	// starting and end greetings
 	header := boxStyle.Render("* welcome to my new world * \n\n Meet "+m.who.Name+"and greet him !") + "\n\n"
 	footer := "\n" + m.input.View() + "\n\n" + dimStyle.Render("ctrl+n: New Chat \nesc: leave")
 
 	chat := ""
 	for _, line := range m.messages {
 
-		name := youStyle.Render("you")
+		name := youStyle.Render(m.nick)
 		if line.Role == "assistant" {
 
 			name = strangerStyle.Foreground(lipgloss.Color(m.who.Color)).Render(m.who.Name)
@@ -200,6 +216,7 @@ func (m model) View() string {
 		text:= lipgloss.NewStyle().PaddingLeft(2).Width(m.width).Render(line.Content)
 		chat += name + "\n" + text + "\n\n"
 	}
+
 
 	// typing indicator
 	if m.typing {
@@ -211,6 +228,7 @@ func (m model) View() string {
 		chat += dimStyle.Render(m.who.Name + " has left the chat \n" +summary + "\n" )
 	}
 	chat += dimStyle.Render(m.notice)
+
 
 	// lines to fit window
 	lines := strings.Split(chat, "\n")
@@ -241,6 +259,7 @@ type model struct {
 	searching bool
 	started time.Time
 	bye bool
+	nick string
 }
 
 type searchDoneMsg struct{}
