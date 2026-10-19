@@ -138,7 +138,7 @@ func (m model) View() string {
 		name := youStyle.Render("you")
 		if line.Role == "assistant" {
 
-			name = strangerStyle.Render(m.who.Name)
+			name = strangerStyle.Foreground(lipgloss.Color(m.who.Color)).Render(m.who.Name)
 		}
 
 		text:= lipgloss.NewStyle().PaddingLeft(2).Width(m.width).Render(line.Content)
