@@ -15,6 +15,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 	"time"
+	"fmt"
 )
 
 const aiModel = "nvidia/nemotron-3-super-120b-a12b"
@@ -67,7 +68,7 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	input.Width = 50
 	input.Focus()
 
-	return model{input: input, who: randomPersona()}, nil
+	return model{input: input, who: randomPersona(), started: time.Now()}, nil
 }
 
 
@@ -84,8 +85,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = size.Height
 	}
 
-	// esc quit
+	// esc quit and bye message
 	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "esc" {
+
+		m.bye = true
 		return m, tea.Quit
 	}
 
@@ -103,7 +106,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.notice = ""
 		m.left = false
 		m.input.Reset()
+
 		m.chatID++
+		m.started = time.Now()
 		m.searching = true
 		
 		return m, tea.Tick(1500*time.Millisecond, func(time.Time) tea.Msg { return searchDoneMsg{} })
@@ -169,6 +174,12 @@ var (
 // user box and response with name
 func (m model) View() string {
 
+	// message summary length and how much talked
+	summary := "you talked with " + m.who.Name + " for " + time.Since(m.started).Round(time.Second).String() + " with " + fmt.Sprint(len(m.messages)) + " messages"
+	if m.bye {
+		return boxStyle.Render("goodbye! " +summary) + "\n"
+	}
+
 	if m.searching { 
 
 		return boxStyle.Render("searching for a stranger...")
@@ -197,7 +208,7 @@ func (m model) View() string {
 	}
 	if m.left {
 
-		chat += dimStyle.Render(m.who.Name+ " has left the chat") + "\n"
+		chat += dimStyle.Render(m.who.Name + " has left the chat \n" +summary + "\n" )
 	}
 	chat += dimStyle.Render(m.notice)
 
@@ -228,6 +239,8 @@ type model struct {
 	chatID int 
 	left bool
 	searching bool
+	started time.Time
+	bye bool
 }
 
 type searchDoneMsg struct{}
