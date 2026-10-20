@@ -9,7 +9,8 @@ I've used Bubble Tea, Bubbles and Lip Gloss for screen, text box and color desig
 
 ## How to use:
 
-Connect to the project through SSH. 
+Connect to the project through SSH.
+`ssh -p 32128 bore.pub`
 
 Choose your username for the conversation.
 
