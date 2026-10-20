@@ -24,9 +24,12 @@ type message struct {
 // ask the AI
 func aiReply(p persona, chat []message, chatID int) tea.Cmd {
 
-	return func() tea.Msg {
+	return func() tea.Msg  {
 
-		reply, err := askAI(p, chat)
+		// persona and context as system prompt 
+		system := message{Role: "system", Content: "You are " + p.Name + ". " + p.About + " You are texting as a stranger individual to someone. You have to reply like a real person texting with short, causal in completely human form while behaving like your character description. avoid excessive emoji in every message, only use where appropriate. Don't tell anything about being AI. If the user seem to be rude or boring, you can leave saying a short goodbye and end your message with [leave]"}
+
+		reply, err := askAI(system, chat)
 		if err != nil { 
 
 			log.Error("AI failed", "error", err)
@@ -39,10 +42,27 @@ func aiReply(p persona, chat []message, chatID int) tea.Cmd {
 	}
 }
 
-// persona and context as system prompt
-func askAI (p persona, chat []message) (string, error) {
+// end summary 
+func aiSummary(name string, chat []message, chatID int) tea.Cmd {
 
-	system := message{Role: "system", Content: "You are " + p.Name + ". " + p.About + " You are texting as a stranger individual to someone. You have to reply like a real person texting with short, causal in completely human form while behaving like your character description. Don't tell anything about being AI. If the user seem to be rude or boring, you can leave saying a short goodbye and end your message with [leave]"}
+	return func() tea.Msg {
+
+		system := message{Role: "system", Content: "write a short recap of this conversation between visitor(user) and " + name + "(assistant). Talk with user as third person narrator in 2-4 lines saying what you talked about, what you shared or learned and optionally very short reason for why chat ended. You should write in plain text, no list and NEVER use em dashes!"}
+
+		text, err := askAI(system, chat)
+
+		if err != nil {
+
+			log.Error ("AI summary failed", "error", err)
+			return summaryMsg{chatID, "no summaries :("}
+		}
+		return summaryMsg{chatID, text}
+	}
+}
+
+
+// model details and config
+func askAI(system message, chat []message) (string, error) {
 
 	body, _ := json.Marshal(map[string]any{
 

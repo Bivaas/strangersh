@@ -85,11 +85,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = size.Height
 	}
 
-	// esc quit and bye message
+	// esc quit and bye summary message 
 	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "esc" {
 
+		if m.bye || len(m.messages) == 0 {
+
+			m.bye = true
+			return m, tea.Quit
+		}
 		m.bye = true
-		return m, tea.Quit
+		m.recap = "writing the summary....."
+		return m, aiSummary(m.who.Name, m.messages, m.chatID)
 	}
 
 	// new stranger
@@ -105,6 +111,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.typing = false
 		m.notice = ""
 		m.left = false
+		m.recap =""
 		m.input.Reset()
 
 		m.chatID++
@@ -163,7 +170,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		text := strings.ReplaceAll(reply.text, "[leave]", "")
+
 		m.messages = append(m.messages, message{Role: "assistant", Content: text})
+		if m.left {
+
+			m.recap = "writing the summary....."
+			return m, aiSummary(m.who.Name, m.messages, m.chatID)
+		}
+		return m, nil
+	}
+
+	// summary came 
+	if sum, ok := msg.(summaryMsg); ok {
+
+		if sum.chatID != m.chatID {
+			return m, nil
+		}
+		m.recap = sum.text
+		if m.bye {
+
+			return m, tea.Quit
+		}
 		return m, nil
 	}
 
@@ -184,10 +211,10 @@ var (
 // user box and response with name
 func (m model) View() string {
 
-	// message summary length and how much talked
+	// recap summary and box
 	summary := "you talked with " + m.who.Name + " for " + time.Since(m.started).Round(time.Second).String() + " with " + fmt.Sprint(len(m.messages)) + " messages"
 	if m.bye {
-		return boxStyle.Render("goodbye! " +summary) + "\n"
+		return boxStyle.Width(m.width - 2).Render("goodbye! "+ summary+ "\n\n" + m.recap) + "\n"
 	}
 
 
@@ -223,9 +250,12 @@ func (m model) View() string {
 
 		chat += dimStyle.Render(m.who.Name+" is typing....") + "\n"
 	}
+	// left the chat and summary block
 	if m.left {
 
 		chat += dimStyle.Render(m.who.Name + " has left the chat \n" +summary + "\n" )
+		chat += "\n" + boxStyle.Width(m.width - 2).Render(m.recap) + "\n"
+
 	}
 	chat += dimStyle.Render(m.notice)
 
@@ -251,18 +281,26 @@ type model struct {
 	typing bool
 	who persona
 	notice string
-
 	width int
 	height int
 	chatID int 
+
 	left bool
 	searching bool
 	started time.Time
 	bye bool
 	nick string
+	recap string
 }
 
 type searchDoneMsg struct{}
+
+// summary back to update
+type summaryMsg struct {
+	
+	chatID int
+	text string
+}
 
 // bot ans back to update
 type replyMsg struct {
