@@ -18,7 +18,7 @@ import (
 	"fmt"
 )
 
-const aiModel = "nvidia/nemotron-3-super-120b-a12b"
+const aiModel = "nvidia/nemotron-3.5-super-vl-120b-a12b"
 var apiKey string 
 
 func main() { 

@@ -5,7 +5,7 @@ A name derived from my dictionary by combining two words stranger and ssh. The p
 
 ## About:
 
-I've used Bubble Tea, Bubbles and Lip Gloss for screen, text box and color designs. I've used nemotron 3 super 120b model to have quick response and its also not super demanding like GLM. Thinking has also been turned off to have faster output. This is hosted in Hack Club Nest and with bore.pub tunnel.
+I've used Bubble Tea, Bubbles and Lip Gloss for screen, text box and color designs. I've used nemotron-3.5-super 120b model to have quick response and its also not super demanding like GLM. Thinking has also been turned off to have faster output. This is hosted in Hack Club Nest and with bore.pub tunnel.
 
 ## How to use:
 
