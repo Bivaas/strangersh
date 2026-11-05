@@ -48,9 +48,14 @@ github.com/ekzhang/bore
 ```
 
 
-# Use of AI:
+## Use of AI:
 
 I used AI to generate random person name and their description (persona), to diagnose bugs and error alongside some constructive feedback about the choices I make. It also helped me when making the project accessible with bore.pub tunnel.
+
+## Images
+
+*conversation with a stranger*
+![Screenshot](uploads/strangersh.png)
 
 
 # Thank You :)
