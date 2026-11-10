@@ -55,7 +55,7 @@ I used AI to generate random person name and their description (persona), to dia
 ## Images
 
 *conversation with a stranger*
-![Screenshot](uploads/strangersh.png)
+![Screenshot](uploads/strangersh.PNG)
 
 
 # Thank You :)
